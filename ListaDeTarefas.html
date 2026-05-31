@@ -1,0 +1,458 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lista de Tarefas</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #111827;
+      --card-alt: #17203a;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-soft: #0f172a;
+      --danger: #f43f5e;
+      --success: #22c55e;
+      --border: rgba(148, 163, 184, 0.16);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 28%),
+                  radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.12), transparent 30%),
+                  var(--bg);
+      color: var(--text);
+    }
+
+    .page {
+      width: min(1140px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    header {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(2rem, 3.5vw, 3.2rem);
+      letter-spacing: -0.04em;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--text-muted);
+      max-width: 720px;
+      line-height: 1.75;
+    }
+
+    .panel {
+      display: grid;
+      gap: 20px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.22);
+    }
+
+    .task-form,
+    .toolbar,
+    .task-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .task-form {
+      grid-template-columns: 1.65fr 1fr;
+    }
+
+    .task-form input,
+    .task-form select,
+    .task-form button {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid transparent;
+      padding: 16px 18px;
+      background: var(--card-alt);
+      color: var(--text);
+      font-size: 0.98rem;
+      outline: none;
+    }
+
+    .task-form input:focus,
+    .task-form select:focus {
+      border-color: rgba(56, 189, 248, 0.7);
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.14);
+    }
+
+    .task-form button {
+      border: none;
+      background: linear-gradient(135deg, #38bdf8, #22c55e);
+      color: #0f172a;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .task-form button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 40px rgba(34, 197, 94, 0.25);
+    }
+
+    .toolbar {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      align-items: center;
+    }
+
+    .toolbar select,
+    .toolbar button {
+      border-radius: 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .toolbar button {
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .toolbar button:hover {
+      background: rgba(56, 189, 248, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .toolbar .stats {
+      color: var(--text-muted);
+      min-width: 160px;
+    }
+
+    .task-list {
+      margin-top: 8px;
+    }
+
+    .task-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      padding: 20px;
+      background: var(--card);
+      border: 1px solid rgba(148, 163, 184, 0.08);
+      border-radius: 22px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .task-card:hover {
+      transform: translateY(-1px);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+
+    .task-card .meta {
+      display: grid;
+      gap: 10px;
+    }
+
+    .task-card .meta strong {
+      display: block;
+      font-size: 1.05rem;
+      margin-bottom: 4px;
+    }
+
+    .task-card .meta small {
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .task-card .tags {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      background: rgba(56, 189, 248, 0.14);
+      color: #bfdbfe;
+    }
+
+    .tag.status {
+      background: rgba(34, 197, 94, 0.14);
+      color: #bbf7d0;
+    }
+
+    .task-card .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .task-card .actions button {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      padding: 10px;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .task-card .actions button:hover {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text);
+    }
+
+    .empty-state {
+      padding: 32px;
+      text-align: center;
+      border: 1px dashed rgba(148, 163, 184, 0.4);
+      border-radius: 22px;
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .footer {
+      margin-top: 18px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 720px) {
+      .task-form {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <h1>Lista de Tarefas</h1>
+      <p>Adicione tarefas, organize por categoria, filtre facilmente, remova itens e salve tudo no seu navegador automaticamente.</p>
+    </header>
+
+    <section class="panel">
+      <form id="taskForm" class="task-form" autocomplete="off">
+        <div style="display:grid; gap:16px;">
+          <input id="taskText" type="text" placeholder="O que você precisa fazer?" required maxlength="120" />
+          <input id="taskNotes" type="text" placeholder="Detalhes ou notas (opcional)" maxlength="200" />
+        </div>
+
+        <div style="display:grid; gap:16px;">
+          <select id="taskCategory" required>
+            <option value="">Escolha uma categoria</option>
+            <option value="Trabalho">Trabalho</option>
+            <option value="Pessoal">Pessoal</option>
+            <option value="Estudos">Estudos</option>
+            <option value="Casa">Casa</option>
+            <option value="Outros">Outros</option>
+          </select>
+          <button type="submit">Adicionar tarefa</button>
+        </div>
+      </form>
+
+      <div class="toolbar">
+        <select id="filterCategory">
+          <option value="Todas">Filtrar por categoria</option>
+          <option value="Todas">Todas</option>
+          <option value="Trabalho">Trabalho</option>
+          <option value="Pessoal">Pessoal</option>
+          <option value="Estudos">Estudos</option>
+          <option value="Casa">Casa</option>
+          <option value="Outros">Outros</option>
+        </select>
+
+        <select id="filterStatus">
+          <option value="Todas">Mostrar tudo</option>
+          <option value="Todas">Todas</option>
+          <option value="Pendentes">Pendentes</option>
+          <option value="Concluídas">Concluídas</option>
+        </select>
+
+        <button id="clearCompleted" type="button">Limpar concluídas</button>
+        <button id="deleteAll" type="button" style="color:#f8fafc; background:#ef4444; border:none;">Apagar tudo</button>
+      </div>
+
+      <div id="taskList" class="task-list"></div>
+      <p class="footer">Dados salvos automaticamente no <strong>localStorage</strong>. Recarregue a página para continuar de onde parou.</p>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('taskForm');
+    const taskText = document.getElementById('taskText');
+    const taskNotes = document.getElementById('taskNotes');
+    const taskCategory = document.getElementById('taskCategory');
+    const filterCategory = document.getElementById('filterCategory');
+    const filterStatus = document.getElementById('filterStatus');
+    const taskList = document.getElementById('taskList');
+    const clearCompleted = document.getElementById('clearCompleted');
+    const deleteAll = document.getElementById('deleteAll');
+
+    const STORAGE_KEY = 'todoListAppTasks';
+
+    let tasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+
+    function saveTasks() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
+
+    function formatDate(timestamp) {
+      const date = new Date(timestamp);
+      return date.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+    }
+
+    function createTaskCard(task) {
+      const card = document.createElement('article');
+      card.className = 'task-card';
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+
+      const title = document.createElement('strong');
+      title.textContent = task.title;
+      meta.appendChild(title);
+
+      const notes = document.createElement('small');
+      notes.textContent = task.notes || 'Sem notas adicionais';
+      meta.appendChild(notes);
+
+      const tags = document.createElement('div');
+      tags.className = 'tags';
+
+      const categoryTag = document.createElement('span');
+      categoryTag.className = 'tag';
+      categoryTag.textContent = task.category;
+      tags.appendChild(categoryTag);
+
+      const statusTag = document.createElement('span');
+      statusTag.className = 'tag status';
+      statusTag.textContent = task.completed ? 'Concluída' : 'Pendente';
+      tags.appendChild(statusTag);
+      meta.appendChild(tags);
+
+      const footer = document.createElement('small');
+      footer.textContent = 'Criada em ' + formatDate(task.createdAt);
+      meta.appendChild(footer);
+
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+
+      const toggleButton = document.createElement('button');
+      toggleButton.type = 'button';
+      toggleButton.title = 'Marcar como concluída ou pendente';
+      toggleButton.innerHTML = task.completed ? '🔄' : '✅';
+      toggleButton.addEventListener('click', () => {
+        task.completed = !task.completed;
+        saveTasks();
+        renderTasks();
+      });
+      actions.appendChild(toggleButton);
+
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.title = 'Remover tarefa';
+      removeButton.innerHTML = '🗑️';
+      removeButton.addEventListener('click', () => {
+        tasks = tasks.filter((item) => item.id !== task.id);
+        saveTasks();
+        renderTasks();
+      });
+      actions.appendChild(removeButton);
+
+      card.appendChild(meta);
+      card.appendChild(actions);
+      return card;
+    }
+
+    function renderTasks() {
+      taskList.innerHTML = '';
+      const filterCat = filterCategory.value;
+      const filterStat = filterStatus.value;
+      const filtered = tasks
+        .filter((task) => filterCat === 'Todas' || task.category === filterCat)
+        .filter((task) => filterStat === 'Todas' || (filterStat === 'Pendentes' ? !task.completed : task.completed));
+
+      if (!filtered.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.innerHTML = '<strong>Nenhuma tarefa encontrada.</strong><br>Adicione uma nova tarefa ou altere os filtros para ver mais resultados.';
+        taskList.appendChild(empty);
+        return;
+      }
+
+      filtered.forEach((task) => taskList.appendChild(createTaskCard(task)));
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const title = taskText.value.trim();
+      const notes = taskNotes.value.trim();
+      const category = taskCategory.value;
+
+      if (!title || !category) return;
+
+      tasks.unshift({
+        id: Date.now().toString(),
+        title,
+        notes,
+        category,
+        completed: false,
+        createdAt: Date.now(),
+      });
+
+      saveTasks();
+      renderTasks();
+      form.reset();
+      taskText.focus();
+    });
+
+    filterCategory.addEventListener('change', renderTasks);
+    filterStatus.addEventListener('change', renderTasks);
+
+    clearCompleted.addEventListener('click', () => {
+      const completed = tasks.some((task) => task.completed);
+      if (!completed) return;
+      tasks = tasks.filter((task) => !task.completed);
+      saveTasks();
+      renderTasks();
+    });
+
+    deleteAll.addEventListener('click', () => {
+      if (!tasks.length) return;
+      const confirmDelete = confirm('Deseja apagar todas as tarefas? Esta ação não pode ser desfeita.');
+      if (!confirmDelete) return;
+      tasks = [];
+      saveTasks();
+      renderTasks();
+    });
+
+    renderTasks();
+  </script>
+</body>
+</html>
